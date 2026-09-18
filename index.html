@@ -1,0 +1,190 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>FinWise AI</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #101820;
+            color: white;
+            text-align: center;
+            padding: 30px;
+        }
+
+        .box {
+            max-width: 700px;
+            margin: auto;
+            background: #182631;
+            padding: 30px;
+            border-radius: 15px;
+        }
+
+        select, button {
+            padding: 12px;
+            margin: 10px;
+            border-radius: 8px;
+            border: none;
+            font-size: 16px;
+        }
+
+        button {
+            background: #00b894;
+            color: white;
+            cursor: pointer;
+        }
+
+        .cards {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 25px;
+            flex-wrap: wrap;
+        }
+
+        .card {
+            background: #223442;
+            padding: 15px;
+            border-radius: 10px;
+            min-width: 130px;
+        }
+
+        .price {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .insight {
+            background: #223442;
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        canvas {
+            margin-top: 25px;
+            width: 100%;
+            background: #111c24;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="box">
+
+    <h1>📈 FinWise AI</h1>
+    <p>Financial Market Prediction Dashboard</p>
+
+    <select id="asset">
+        <option value="RELIANCE">RELIANCE</option>
+        <option value="TCS">TCS</option>
+        <option value="INFY">INFY</option>
+    </select>
+
+    <button onclick="analyze()">Analyze</button>
+
+    <div id="result"></div>
+
+    <canvas id="chart" width="500" height="250"></canvas>
+
+</div>
+
+<script>
+
+async function analyze() {
+
+    let asset = document.getElementById("asset").value;
+
+    let response = await fetch("/analyze/" + asset);
+
+    let data = await response.json();
+
+    if (data.error) {
+        document.getElementById("result").innerHTML = data.error;
+        return;
+    }
+
+    document.getElementById("result").innerHTML = `
+
+        <div class="cards">
+
+            <div class="card">
+                <p>Current Price</p>
+                <div class="price">₹${data.current_price}</div>
+            </div>
+
+            <div class="card">
+                <p>Prediction</p>
+                <div class="price">₹${data.predicted_price}</div>
+            </div>
+
+            <div class="card">
+                <p>Trend</p>
+                <div class="price">${data.trend}</div>
+            </div>
+
+        </div>
+
+        <div class="insight">
+            <h3>🤖 AI Insight</h3>
+            <p>${data.insight}</p>
+            <small>
+                This is an educational prediction using sample data,
+                not guaranteed financial advice.
+            </small>
+        </div>
+    `;
+
+    drawChart(data.prices, data.predicted_price);
+}
+
+
+function drawChart(prices, prediction) {
+
+    let canvas = document.getElementById("chart");
+
+    let ctx = canvas.getContext("2d");
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    let allPrices = [...prices, prediction];
+
+    let max = Math.max(...allPrices);
+    let min = Math.min(...allPrices);
+
+    let difference = max - min;
+
+    if (difference === 0) {
+        difference = 1;
+    }
+
+    ctx.beginPath();
+
+    allPrices.forEach((price, i) => {
+
+        let x = 50 + i * 85;
+
+        let y = 200 -
+            ((price - min) / difference) * 150;
+
+        if (i === 0) {
+            ctx.moveTo(x, y);
+        } else {
+            ctx.lineTo(x, y);
+        }
+    });
+
+    ctx.strokeStyle = "#00b894";
+
+    ctx.lineWidth = 3;
+
+    ctx.stroke();
+}
+
+</script>
+
+</body>
+</html>
